@@ -1,0 +1,827 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>worldcup 2026</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400..900;1,400..900&family=Montserrat:wght@900&family=Readex+Pro:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+<style>
+*, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+html, body { overflow-x: hidden; scroll-behavior: auto; }
+body { font-family: 'Readex Pro', system-ui, -apple-system, sans-serif; background: #010101; color: #fff; -webkit-font-smoothing: antialiased; }
+
+:root {
+  --gold: #ffffff;
+  --gold-glow: rgba(255, 255, 255, 0.15);
+  --malachite: #005a36;
+}
+
+.fixed { position: fixed; }
+.absolute { position: absolute; }
+.relative { position: relative; }
+.inset-0 { top: 0; right: 0; bottom: 0; left: 0; }
+
+/* Scroll Canvas Background */
+#scroll-video-container {
+  position: fixed; inset: 0; z-index: -10;
+  background: #050505; top: -10%;
+}
+#scroll-video-container canvas,
+#scroll-video-container video {
+  position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover;
+  mix-blend-mode: screen;
+  filter: brightness(0.62) contrast(1.05); /* 调暗 38%，确保星空深邃，突出前台纯白大字的可读性 */
+}
+#scroll-video-container video { z-index: 2; }
+#scroll-video-container canvas { display: none; }
+#scroll-video-container .overlay { display: none; }
+
+/* Ambient Glow behind Canvas */
+.ambient-glow {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 80vw;
+  height: 80vh;
+  background: radial-gradient(circle, rgba(0, 90, 54, 0.16) 0%, rgba(212, 175, 55, 0.08) 50%, rgba(5, 5, 5, 0) 100%);
+  filter: blur(120px);
+  z-index: 1;
+  pointer-events: none;
+  animation: glowPulse 12s infinite alternate ease-in-out;
+}
+@keyframes glowPulse {
+  0% { transform: translate(-50%, -50%) scale(1.0); opacity: 0.8; }
+  100% { transform: translate(-50%, -50%) scale(1.2) rotate(30deg); opacity: 1; }
+}
+
+/* Particles overlaying foreground */
+#particles-canvas {
+  position: fixed; inset: 0; width: 100%; height: 100%;
+  pointer-events: none; z-index: 3;
+}
+
+/* Nav */
+nav {
+  position: fixed; top: 0; left: 0; right: 0; z-index: 50;
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 1.25rem 2.5rem;
+  background: linear-gradient(to bottom, rgba(0,0,0,0.5) 0%, transparent 100%);
+}
+nav .logo { font-family: 'Montserrat', sans-serif; font-weight: 900; font-size: 1.25rem; color: #fff; letter-spacing: -0.04em; text-transform: lowercase; }
+nav .nav-links { display: flex; align-items: center; gap: 1.5rem; }
+nav .nav-links a { font-size: 0.875rem; color: #d1d5db; text-decoration: none; transition: color 0.2s; text-transform: lowercase; }
+nav .nav-links a:hover { color: var(--gold); }
+nav .social { display: flex; align-items: center; gap: 1rem; }
+nav .social a { color: #d1d5db; transition: color 0.2s; }
+nav .social a:hover { color: var(--gold); }
+nav .social svg { width: 1.25rem; height: 1.25rem; }
+
+/* Hero */
+#hero {
+  position: relative; height: 100vh; width: 100%; display: flex; flex-direction: column;
+}
+#hero .gradient-overlay {
+  display: none;
+}
+#hero .content {
+  position: relative; z-index: 10; flex: 1; display: flex; flex-direction: column;
+  align-items: center; justify-content: center; text-align: center; /* 垂直水平完全居中 */
+  padding: 11vh 1.5rem 0; /* 顶部增加 11vh 的 padding 偏置，使文字整体进一步往下平移，避开顶部导航且完美契合金杯瓶颈的黄金分割线 */
+}
+#hero .subtitle { font-size: 0.875rem; color: #9ca3af; margin-bottom: 1.5rem; letter-spacing: 0.25em; text-transform: lowercase; font-weight: 700; }
+#hero .hero-title-main {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  max-width: 75rem;
+  text-transform: lowercase;
+  letter-spacing: -0.04em;
+  color: #ffffff;
+  text-align: center;
+  gap: 0.6rem; /* 独立而均等的行间距像素级控制中心，使三行在大屏/小屏下都有完美等距的呼吸感 */
+}
+#hero .hero-title-main .title-row {
+  width: 100%;
+}
+#hero .hero-title-main .row-1 {
+  font-size: clamp(2.4rem, 8vw, 6.8rem);
+  font-weight: 800;
+  line-height: 1.0;
+}
+#hero .hero-title-main .row-3 {
+  font-size: clamp(2.4rem, 8vw, 6.8rem);
+  font-weight: 800;
+  line-height: 1.0;
+  margin-top: clamp(0.5rem, 1.6vw, 2.0rem); /* 独立向下微调第三行，拉开与第二行动效字的距离，使视觉层次更开阔 */
+}
+#hero .hero-title-main .row-2 {
+  position: relative;
+  /* 第二行高度与字体大小高度匹配，使其在垂直几何上形成最纯净的物理对称中心 */
+  height: clamp(3.2rem, 12vw, 9.8rem); 
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+#hero h1 .gooey-container {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+#hero h1 .gooey-svg {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  opacity: 0;
+  z-index: -1; /* 100% 占满以支撑浏览器渲染 Filter Region，但完全不可见且不拦指针，绕过 0x0 渲染 bug */
+}
+#hero h1 .gooey-wrapper {
+  position: absolute;
+  top: -100%;
+  bottom: -100%;
+  left: 0;
+  right: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  filter: url(#gooey-threshold);
+  overflow: visible; /* 允许滤镜像素向外溢出渲染 */
+}
+#hero h1 .highlight-title {
+  position: absolute;
+  left: 50%;
+  top: 50%; /* 既然有了独立的物理 row-2 容器，垂直对齐可回归数学上精确无暇的 50% 物理中心 */
+  transform: translate(-50%, -50%);
+  font-family: 'Playfair Display', Georgia, serif;
+  font-style: italic;
+  font-weight: 900;
+  font-size: clamp(3.2rem, 12vw, 9.8rem);
+  background-clip: text;
+  -webkit-background-clip: text;
+  color: transparent;
+  letter-spacing: -0.02em;
+  text-transform: lowercase;
+  white-space: nowrap;
+  user-select: none;
+  text-align: center;
+  opacity: 0%;
+  line-height: 1.2; /* 设为正常的 1.2 倍行高，使渲染盒高度紧贴字形，确保视觉几何中心绝对垂直居中 */
+  padding: 0; /* 移除额外 padding，防止 baseline 发生垂直偏置，使三行文字的间距完美均匀一致 */
+}
+#hero .ctas {
+  display: flex; align-items: center; gap: 1rem; margin-top: 2.5rem; flex-wrap: wrap; justify-content: center;
+}
+#hero .code-box {
+  display: flex; align-items: center; gap: 0.5rem;
+  background: #111111; border: 1px solid rgba(212, 175, 55, 0.2);
+  border-radius: 0.5rem; padding: 0.875rem 2rem;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.05);
+}
+#hero .code-box .prompt { color: var(--gold); font-family: monospace; font-size: 0.875rem; }
+#hero .code-box code { font-size: 0.875rem; color: #e5e7eb; font-family: monospace; }
+#hero .cta-btn {
+  display: inline-flex; align-items: center; gap: 0.75rem;
+  background: transparent;
+  color: #fff;
+  border: 1px solid rgba(255, 255, 255, 0.35);
+  border-radius: 2rem;
+  padding: 0.875rem 2.25rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+  text-decoration: none;
+  transition: background 0.3s, border-color 0.3s, transform 0.2s;
+  text-transform: lowercase;
+}
+#hero .cta-btn:hover {
+  background: rgba(255, 255, 255, 0.1);
+  border-color: rgba(255, 255, 255, 0.8);
+  transform: translateY(-2px);
+}
+#hero .cta-btn:active {
+  transform: translateY(0);
+}
+#hero .bounce-arrow {
+  position: relative; z-index: 10; display: flex; justify-content: center; padding-bottom: 2rem;
+}
+#hero .bounce-arrow svg { width: 1.5rem; height: 1.5rem; color: #6b7280; animation: bounce 1s infinite; }
+
+@keyframes bounce {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-25%); }
+}
+
+/* Cards triggered during scroll */
+#fixed-cards {
+  position: fixed;
+  inset: 0;
+  z-index: 20;
+  opacity: 0;
+  pointer-events: none;
+  background: transparent;
+  padding: 0;
+}
+#fixed-cards .grid {
+  position: relative;
+  width: 100%;
+  height: 100%;
+}
+#fixed-cards .card {
+  position: absolute;
+  background: transparent;
+  border: none;
+  box-shadow: none;
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+  padding: 0;
+  max-width: 22rem;
+  pointer-events: auto;
+  transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+}
+#fixed-cards .card h3 {
+  font-family: 'Montserrat', sans-serif;
+  font-size: 1.65rem;
+  font-weight: 900;
+  color: var(--gold);
+  margin-bottom: 0.6rem;
+  text-transform: lowercase;
+  letter-spacing: -0.03em;
+  text-shadow: 0 4px 12px rgba(0,0,0,0.9);
+}
+#fixed-cards .card p {
+  color: #e5e7eb;
+  font-size: 0.875rem;
+  line-height: 1.65;
+  text-transform: lowercase;
+  font-weight: 300;
+  text-shadow: 0 2px 8px rgba(0,0,0,0.9);
+}
+
+/* 桌面端不对称靠右流线排版，彻底避开左侧和中部的金杯主体 */
+@media (min-width: 769px) {
+  #fixed-cards .card {
+    text-align: right;
+  }
+  #fixed-cards .card:nth-child(1) {
+    top: 20%;
+    right: 8vw;
+    left: auto;
+  }
+  #fixed-cards .card:nth-child(2) {
+    top: 42%;
+    right: 14vw;
+    left: auto;
+  }
+  #fixed-cards .card:nth-child(3) {
+    top: 64%;
+    right: 6vw;
+    left: auto;
+  }
+}
+
+/* Section 3 Footer focus */
+#section-three {
+  position: relative; min-height: 100vh; display: flex; align-items: flex-end;
+  justify-content: center; padding: 0 2.5rem 8rem;
+}
+#section-three .inner {
+  position: relative; z-index: 10; display: flex; flex-direction: column;
+  align-items: center; text-align: center;
+  opacity: 0; transform: translateY(32px); filter: blur(8px);
+  transition: opacity 1s ease-out, transform 1s ease-out, filter 1s ease-out;
+}
+#section-three .inner.visible { opacity: 1; transform: translateY(0); filter: blur(0); }
+#section-three .inner p { color: #d1d5db; font-size: 1rem; margin-bottom: 0.75rem; text-transform: lowercase; }
+#section-three .inner h2 { font-size: clamp(2rem, 6.5vw, 4.6rem); font-weight: 700; text-transform: lowercase; letter-spacing: -0.04em; }
+
+/* Content wrapper */
+#content { position: relative; z-index: 2; }
+
+/* Loading preloader */
+#loader {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: #050505;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  z-index: 100;
+  transition: opacity 0.8s cubic-bezier(0.25, 1, 0.5, 1), visibility 0.8s;
+  color: #ffffff;
+}
+#loader.fade-out {
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+}
+.loader-content {
+  text-align: center;
+}
+.loader-percentage {
+  font-size: 5rem;
+  font-weight: 900;
+  letter-spacing: -0.02em;
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+  font-family: 'Montserrat', sans-serif;
+  margin-bottom: 1.5rem;
+  display: flex;
+  justify-content: center;
+  background: linear-gradient(180deg, #ffffff 40%, var(--gold) 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  opacity: 0;
+  animation: loaderFocusEntrance 1.8s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+@keyframes loaderFocusEntrance {
+  0% { opacity: 0; filter: blur(15px); transform: scale(1.18); }
+  100% { opacity: 1; filter: blur(0); transform: scale(1); }
+}
+.loader-bar-bg {
+  width: 160px;
+  height: 1px;
+  background-color: rgba(255, 255, 255, 0.1);
+  margin: 0 auto;
+  position: relative;
+  overflow: hidden;
+  opacity: 0;
+  animation: loaderBarFadeIn 1.5s cubic-bezier(0.16, 1, 0.3, 1) 0.3s forwards;
+}
+@keyframes loaderBarFadeIn {
+  0% { opacity: 0; transform: scaleX(0.8); }
+  100% { opacity: 1; transform: scaleX(1); }
+}
+.loader-bar-fill {
+  position: absolute;
+  top: 0;
+  left: 0;
+  height: 100%;
+  width: 0%;
+  background-color: var(--gold);
+  transition: width 0.1s ease-out;
+  box-shadow: 0 0 8px var(--gold-glow);
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  nav { padding: 1rem 1.5rem; }
+  nav .nav-links, nav .social { display: none; }
+  #hero .content { padding-bottom: 5rem; }
+  #hero h1 { font-size: 1.75rem; }
+  #hero .ctas { flex-direction: column; }
+  #fixed-cards {
+    top: auto;
+    right: 0;
+    bottom: 0;
+    left: 0;
+    transform: none;
+    width: 100%;
+    height: auto;
+    padding: 2rem 1.5rem 3rem;
+    background: linear-gradient(to top, rgba(0,0,0,0.95) 50%, transparent 100%);
+  }
+  #fixed-cards .grid {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+    height: auto;
+    width: 100%;
+  }
+  #fixed-cards .card {
+    position: relative;
+    top: auto !important;
+    left: auto !important;
+    right: auto !important;
+    max-width: 85%;
+    background: transparent;
+    border: none;
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+    padding: 0;
+    box-shadow: none;
+  }
+  #fixed-cards .card:hover {
+    transform: none;
+  }
+  #fixed-cards .card:nth-child(2) {
+    align-self: flex-end;
+    text-align: right;
+  }
+  #fixed-cards .card:nth-child(1),
+  #fixed-cards .card:nth-child(3) {
+    align-self: flex-start;
+    text-align: left;
+  }
+  #section-three { padding-bottom: 5rem; }
+}
+</style>
+</head>
+<body>
+
+<!-- Preloader loading screen -->
+<div id="loader">
+  <div class="loader-content">
+    <div class="loader-percentage" id="loader-percent">00%</div>
+    <div class="loader-bar-bg">
+      <div class="loader-bar-fill" id="loader-fill"></div>
+    </div>
+  </div>
+</div>
+
+<!-- Scroll Video Canvas Background -->
+<div id="scroll-video-container">
+  <div class="ambient-glow"></div>
+  <canvas id="video-canvas"></canvas>
+  <video id="scroll-video" muted playsinline preload="auto">
+    <source src="assets/dalishenbei.mp4" type="video/mp4" />
+  </video>
+  <div class="overlay"></div>
+</div>
+
+<!-- Particles Foreground Overlay -->
+<canvas id="particles-canvas"></canvas>
+
+<!-- Fixed Cards triggered by scroll -->
+<div id="fixed-cards">
+  <div class="grid">
+    <div class="card">
+      <h3>48 nations united</h3>
+      <p>the largest world cup in history. for the first time ever, 48 national teams will compete across north america, bringing global legacy to new heights.</p>
+    </div>
+    <div class="card">
+      <h3>16 host cities</h3>
+      <p>spanning three countries: canada, mexico, and the united states. iconic stadiums in atlanta, los angeles, mexico city, toronto, and vancouver will host the ultimate matches.</p>
+    </div>
+    <div class="card">
+      <h3>104 matches of glory</h3>
+      <p>an expanded 39-day tournament schedule featuring 104 matches of pure intensity. witness the drama, the passion, and the crowning of the new world champion.</p>
+    </div>
+  </div>
+</div>
+
+<!-- Floating Navigation Bar -->
+<nav>
+  <div style="display:flex;align-items:center;gap:2rem;">
+    <span class="logo">worldcup 2026</span>
+    <div class="nav-links">
+      <a href="#hero">glory</a>
+      <a href="#fixed-cards">cities</a>
+      <a href="#cards-trigger">schedule</a>
+      <a href="#section-three">history</a>
+    </div>
+  </div>
+  <div class="social">
+    <a href="#"><svg fill="currentColor" viewBox="0 0 24 24"><path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/></svg></a>
+    <a href="#"><svg fill="currentColor" viewBox="0 0 24 24"><path d="M20.317 4.3698a19.7913 19.7913 0 00-4.8851-1.5152.0741.0741 0 00-.0785.0371c-.211.3753-.4447.8648-.6083 1.2495-1.8447-.2762-3.68-.2762-5.4868 0-.1636-.3933-.4058-.8742-.6177-1.2495a.077.077 0 00-.0785-.037 19.7363 19.7363 0 00-4.8852 1.515.0699.0699 0 00-.0321.0277C.5334 9.0458-.319 13.5799.0992 18.0578a.0824.0824 0 00.0312.0561c2.0528 1.5076 4.0413 2.4228 5.9929 3.0294a.0777.0777 0 00.0842-.0276c.4616-.6304.8731-1.2952 1.226-1.9942a.076.076 0 00-.0416-.1057c-.6528-.2476-1.2743-.5495-1.8722-.8923a.077.077 0 01-.0076-.1277c.1258-.0943.2517-.1923.3718-.2914a.0743.0743 0 01.0776-.0105c3.9278 1.7933 8.18 1.7933 12.0614 0a.0739.0739 0 01.0785.0095c.1202.099.246.1981.3728.2924a.077.077 0 01-.0066.1276 12.2986 12.2986 0 01-1.873.8914.0766.0766 0 00-.0407.1067c.3604.698.7719 1.3628 1.225 1.9932a.076.076 0 00.0842.0286c1.961-.6067 3.9495-1.5219 6.0023-3.0294a.077.077 0 00.0313-.0552c.5004-5.177-.8382-9.6739-3.5485-13.6604a.061.061 0 00-.0312-.0286z"/></svg></a>
+    <a href="#"><svg fill="currentColor" viewBox="0 0 24 24"><path d="M23.953 4.57a10 10 0 01-2.825.775 4.958 4.958 0 002.163-2.723c-.951.555-2.005.959-3.127 1.184a4.92 4.92 0 00-8.384 4.482C7.69 8.095 4.067 6.13 1.64 3.162a4.822 4.822 0 00-.666 2.475c0 1.71.87 3.213 2.188 4.096a4.904 4.904 0 01-2.228-.616v.06a4.923 4.923 0 003.946 4.827 4.996 4.996 0 01-2.212.085 4.936 4.936 0 004.604 3.417 9.867 9.867 0 01-6.102 2.105c-.39 0-.779-.023-1.17-.067a13.995 13.995 0 007.557 2.209c9.053 0 13.998-7.496 13.998-13.985 0-.21 0-.42-.015-.63A9.935 9.935 0 0024 4.59z"/></svg></a>
+  </div>
+</nav>
+
+<!-- Scrollable Webpage Content -->
+<div id="content">
+  <!-- Section 1: Hero SaaS Layout -->
+  <section id="hero">
+    <div class="gradient-overlay"></div>
+    <div class="content">
+      <p class="subtitle">united by glory</p>
+      <h1 class="hero-title-main">
+        <div class="title-row row-1">experience the</div>
+        <div class="title-row row-2">
+          <div class="gooey-container">
+            <svg class="gooey-svg" aria-hidden="true" focusable="false">
+              <defs>
+                <filter id="gooey-threshold" x="-100%" y="-100%" width="300%" height="300%">
+                  <feColorMatrix
+                    in="SourceGraphic"
+                    type="matrix"
+                    values="1 0 0 0 0
+                            0 1 0 0 0
+                            0 0 1 0 0
+                            0 0 0 255 -140"
+                  />
+                </filter>
+              </defs>
+            </svg>
+            <div class="gooey-wrapper">
+              <span id="gooey-text-1" class="highlight-title"></span>
+              <span id="gooey-text-2" class="highlight-title"></span>
+            </div>
+          </div>
+        </div>
+        <div class="title-row row-3">in 2026</div>
+      </h1>
+      <div class="ctas">
+        <a href="#fixed-cards" class="cta-btn">explore glory &rarr;</a>
+      </div>
+    </div>
+    <div class="bounce-arrow">
+      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M19.5 8.25l-7.5 7.5-7.5-7.5"/></svg>
+    </div>
+  </section>
+
+  <!-- Spacer to give scrolling range for video rotation -->
+  <div style="height:280vh;"></div>
+
+  <!-- Cards Trigger Zone -->
+  <div id="cards-trigger" style="height:320vh;"></div>
+
+  <!-- Spacer -->
+  <div style="height:150vh;"></div>
+
+  <!-- Section 3: Final Call -->
+  <section id="section-three">
+    <div class="inner" id="section-three-inner">
+      <p>presenting</p>
+      <h2>united by glory.</h2>
+    </div>
+  </section>
+</div>
+
+<script>
+(function () {
+  const loader = document.getElementById('loader');
+  const loaderPercent = document.getElementById('loader-percent');
+  const loaderFill = document.getElementById('loader-fill');
+  const scrollVideo = document.getElementById('scroll-video');
+  const heroElement = document.getElementById('hero');
+  const fixedCards = document.getElementById('fixed-cards');
+  const cardsGrid = fixedCards ? fixedCards.querySelector('.grid') : null;
+  const sectionThreeInner = document.getElementById('section-three-inner');
+
+  let cachedScrollBounds = { start: 0, end: 1 };
+  let triggerTop = 0;
+  let triggerHeight = 0;
+  let smoothScrollY = 0;
+  let appStarted = false;
+  let lastTickTime = performance.now();
+
+  function setLoaderProgress(percent) {
+    const safePercent = Math.max(0, Math.min(100, Math.floor(percent)));
+    loaderPercent.textContent = `${String(safePercent).padStart(2, '0')}%`;
+    loaderFill.style.width = `${safePercent}%`;
+  }
+
+  function updateLayoutDimensions() {
+    const vh = window.innerHeight;
+    const docHeight = document.documentElement.scrollHeight;
+    cachedScrollBounds = {
+      start: vh * 0.2,
+      end: Math.max(vh, docHeight - vh)
+    };
+
+    const trigger = document.getElementById('cards-trigger');
+    if (trigger) {
+      const rect = trigger.getBoundingClientRect();
+      triggerTop = rect.top + window.scrollY;
+      triggerHeight = rect.height;
+    }
+  }
+
+  const texts = ['usa', 'canada', 'mexico'];
+  const text1El = document.getElementById('gooey-text-1');
+  const text2El = document.getElementById('gooey-text-2');
+  const colors = {
+    usa: 'linear-gradient(to right, #0a3161 15%, #ffffff 50%, #b31942 85%)',
+    canada: 'linear-gradient(to right, #d80621 0%, #ffffff 38%, #ffffff 62%, #d80621 100%)',
+    mexico: 'linear-gradient(to right, #006847 0%, #ffffff 40%, #ffffff 60%, #c8102e 100%)'
+  };
+  const morphTime = 1.0;
+  const cooldownTime = 1.0;
+  let textIndex = 0;
+  let morphProgress = 0;
+  let cooldownProgress = cooldownTime;
+
+  function setWordWithStyle(element, word) {
+    if (!element) return;
+    element.textContent = word;
+    element.style.background = colors[word] || '#ffffff';
+    element.style.webkitBackgroundClip = 'text';
+    element.style.backgroundClip = 'text';
+    element.style.color = 'transparent';
+  }
+
+  function initGooeyText() {
+    setWordWithStyle(text1El, texts[(textIndex + 1) % texts.length]);
+    setWordWithStyle(text2El, texts[textIndex]);
+    if (text1El) text1El.style.opacity = '0%';
+    if (text2El) text2El.style.opacity = '100%';
+  }
+
+  function updateGooeyText(dt) {
+    if (!text1El || !text2El) return;
+
+    if (cooldownProgress > 0) {
+      cooldownProgress -= dt;
+      if (cooldownProgress > 0) {
+        text2El.style.filter = '';
+        text2El.style.opacity = '100%';
+        text1El.style.filter = '';
+        text1El.style.opacity = '0%';
+        return;
+      }
+
+      setWordWithStyle(text1El, texts[textIndex]);
+      textIndex = (textIndex + 1) % texts.length;
+      setWordWithStyle(text2El, texts[textIndex]);
+      morphProgress = -cooldownProgress;
+    } else {
+      morphProgress += dt;
+    }
+
+    let fraction = Math.min(1, morphProgress / morphTime);
+    if (fraction >= 1) {
+      cooldownProgress = cooldownTime;
+      text2El.style.filter = '';
+      text2El.style.opacity = '100%';
+      text1El.style.filter = '';
+      text1El.style.opacity = '0%';
+      return;
+    }
+
+    const safeFraction = Math.max(0.0001, fraction);
+    const invFraction = 1 - fraction;
+    const safeInvFraction = Math.max(0.0001, invFraction);
+    text2El.style.filter = `blur(${Math.min(8 / safeFraction - 8, 100)}px)`;
+    text2El.style.opacity = `${Math.pow(safeFraction, 0.4) * 100}%`;
+    text1El.style.filter = `blur(${Math.min(8 / safeInvFraction - 8, 100)}px)`;
+    text1El.style.opacity = `${Math.pow(safeInvFraction, 0.4) * 100}%`;
+  }
+
+  function getProgress(yValue) {
+    const range = cachedScrollBounds.end - cachedScrollBounds.start;
+    if (range <= 0) return 0;
+    return Math.max(0, Math.min(1, (yValue - cachedScrollBounds.start) / range));
+  }
+
+  let lastSeekTarget = -1;
+  function updateVideoFrame(progress) {
+    if (!scrollVideo || !Number.isFinite(scrollVideo.duration) || scrollVideo.duration <= 0) return;
+
+    const targetTime = progress * scrollVideo.duration;
+    if (Math.abs(targetTime - lastSeekTarget) < 0.035) return;
+
+    lastSeekTarget = targetTime;
+    scrollVideo.currentTime = targetTime;
+  }
+
+  function updateHero() {
+    if (!heroElement) return;
+
+    const fade = Math.max(0, 1 - smoothScrollY / (window.innerHeight * 0.8));
+    heroElement.style.opacity = fade;
+    heroElement.style.transform = `translateY(${(1 - fade) * -80}px)`;
+    heroElement.style.filter = `blur(${(1 - fade) * 12}px)`;
+    heroElement.style.visibility = fade <= 0.001 ? 'hidden' : 'visible';
+  }
+
+  function updateCardsDamping() {
+    if (!fixedCards || !cardsGrid) return;
+
+    const vh = window.innerHeight;
+    const start = triggerTop - vh * 0.3;
+    const end = triggerTop + triggerHeight * 0.45;
+    const range = end - start;
+    const progress = Math.max(0, Math.min(1, range > 0 ? (smoothScrollY - start) / range : 0));
+    const revealPct = progress * 130;
+    const mask = `linear-gradient(to bottom, black ${revealPct}%, transparent ${revealPct + 18}%)`;
+    cardsGrid.style.maskImage = mask;
+    cardsGrid.style.webkitMaskImage = mask;
+
+    const containerActive = smoothScrollY >= start - vh * 0.2 && smoothScrollY <= triggerTop + triggerHeight + vh * 0.2;
+    fixedCards.style.opacity = containerActive ? 1 : 0;
+    fixedCards.style.pointerEvents = containerActive ? 'auto' : 'none';
+    if (!containerActive) return;
+
+    const cards = cardsGrid.querySelectorAll('.card');
+    cards.forEach((card, index) => {
+      const fadeOutStart = triggerTop + triggerHeight * (0.38 + index * 0.12);
+      const fadeOutEnd = triggerTop + triggerHeight * (0.48 + index * 0.12);
+      let cardOpacity = 1;
+      if (smoothScrollY > fadeOutStart) {
+        cardOpacity = Math.max(0, 1 - (smoothScrollY - fadeOutStart) / (fadeOutEnd - fadeOutStart));
+      }
+      const fadeIn = Math.min(1, Math.max(0, (smoothScrollY - (start - vh * 0.2)) / (vh * 0.2)));
+      card.style.opacity = cardOpacity * fadeIn;
+      card.style.transform = `translateY(${(1 - fadeIn) * 28}px)`;
+    });
+  }
+
+  function videoTick(now) {
+    const dt = Math.min(0.05, (now - lastTickTime) / 1000);
+    lastTickTime = now;
+
+    const scrollY = window.scrollY;
+    const diffY = scrollY - smoothScrollY;
+    smoothScrollY = Math.abs(diffY) < 0.01 ? scrollY : smoothScrollY + diffY * 0.04;
+
+    const progress = getProgress(smoothScrollY);
+    updateVideoFrame(progress);
+    updateGooeyText(dt);
+    updateHero();
+    updateCardsDamping();
+
+    requestAnimationFrame(videoTick);
+  }
+
+  function initParticles() {
+    const pCanvas = document.getElementById('particles-canvas');
+    if (!pCanvas) return;
+
+    const pCtx = pCanvas.getContext('2d');
+    let particles = [];
+
+    function resizeParticles() {
+      pCanvas.width = window.innerWidth;
+      pCanvas.height = window.innerHeight;
+      createParticles();
+    }
+
+    function createParticles() {
+      const count = Math.floor((pCanvas.width * pCanvas.height) / 12000);
+      particles = Array.from({ length: count }, () => ({
+        x: Math.random() * pCanvas.width,
+        y: Math.random() * pCanvas.height,
+        vx: (Math.random() - 0.5) * 0.2,
+        vy: (Math.random() - 0.5) * 0.2,
+        size: Math.random() * 1.4 + 0.3,
+        opacity: Math.random() * 0.35 + 0.08
+      }));
+    }
+
+    function animateParticles() {
+      pCtx.clearRect(0, 0, pCanvas.width, pCanvas.height);
+      for (const p of particles) {
+        p.x += p.vx;
+        p.y += p.vy;
+        if (p.x < 0) p.x = pCanvas.width;
+        if (p.x > pCanvas.width) p.x = 0;
+        if (p.y < 0) p.y = pCanvas.height;
+        if (p.y > pCanvas.height) p.y = 0;
+        pCtx.beginPath();
+        pCtx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+        pCtx.fillStyle = `rgba(255,255,255,${p.opacity})`;
+        pCtx.fill();
+      }
+      requestAnimationFrame(animateParticles);
+    }
+
+    resizeParticles();
+    window.addEventListener('resize', resizeParticles);
+    animateParticles();
+  }
+
+  function initIntersection() {
+    if (!sectionThreeInner) return;
+    const observer = new IntersectionObserver(([entry]) => {
+      if (entry.isIntersecting) {
+        sectionThreeInner.classList.add('visible');
+        observer.unobserve(sectionThreeInner);
+      }
+    }, { threshold: 0.15 });
+    observer.observe(sectionThreeInner);
+  }
+
+  function startApp() {
+    if (appStarted) return;
+    appStarted = true;
+    setLoaderProgress(100);
+    loader.classList.add('fade-out');
+    scrollVideo.pause();
+    updateLayoutDimensions();
+    initGooeyText();
+    initParticles();
+    initIntersection();
+    window.addEventListener('resize', updateLayoutDimensions);
+    requestAnimationFrame(videoTick);
+  }
+
+  if (scrollVideo) {
+    scrollVideo.addEventListener('progress', () => {
+      if (!scrollVideo.duration || scrollVideo.buffered.length === 0) return;
+      const bufferedEnd = scrollVideo.buffered.end(scrollVideo.buffered.length - 1);
+      setLoaderProgress(Math.min(99, (bufferedEnd / scrollVideo.duration) * 100));
+    });
+    scrollVideo.addEventListener('loadeddata', startApp, { once: true });
+    scrollVideo.addEventListener('error', startApp, { once: true });
+    scrollVideo.load();
+  } else {
+    startApp();
+  }
+})();
+</script>
+</body>
+</html>
