@@ -556,8 +556,16 @@ nav .social svg { width: 1.25rem; height: 1.25rem; }
   const heroElement = document.getElementById('hero'); // 缓存 hero 元素，避免在 render loop 中频繁查询 DOM
 
   const totalFrames = 600;
-  const framePath = 'frames60';
-  const frameExtension = 'jpg';
+  const supportsWebPFrames = (() => {
+    try {
+      const canvas = document.createElement('canvas');
+      return canvas.toDataURL('image/webp').startsWith('data:image/webp');
+    } catch (error) {
+      return false;
+    }
+  })();
+  const framePath = supportsWebPFrames ? 'frames60-webp' : 'frames60';
+  const frameExtension = supportsWebPFrames ? 'webp' : 'jpg';
   const images = [];
   let loadedCount = 0;
   let appStarted = false;

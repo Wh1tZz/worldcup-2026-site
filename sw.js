@@ -1,6 +1,6 @@
-const FRAME_CACHE = 'worldcup-frame-cache-v1';
+const FRAME_CACHE = 'worldcup-frame-cache-v2';
 const STATIC_CACHE = 'worldcup-static-cache-v1';
-const FRAME_RE = /\/frames60\/frame_\d{6}\.jpg$/;
+const FRAME_RE = /\/frames60(?:-webp)?\/frame_\d{6}\.(?:jpg|webp)$/;
 const STATIC_RE = /\.(?:html|css|js|png|svg|ico|webmanifest)$/;
 
 self.addEventListener('install', (event) => {
